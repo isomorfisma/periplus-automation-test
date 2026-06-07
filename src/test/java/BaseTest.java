@@ -32,12 +32,14 @@ public class BaseTest {
 
     protected void waitForPreloader() {
         try {
-            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(".preloader, #loading")));
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(
+                By.cssSelector(".preloader, #loading")));
         } catch (Exception ignored) {}
     }
 
     protected void scrollAndClick(WebElement el) {
-        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", el);
+        ((JavascriptExecutor) driver)
+            .executeScript("arguments[0].scrollIntoView({block:'center'});", el);
         el.click();
     }
 }

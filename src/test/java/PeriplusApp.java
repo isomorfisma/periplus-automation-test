@@ -21,15 +21,21 @@ public class PeriplusApp {
     }
 
     public void login(String email, String password) {
-        wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector(".right-bar a[href*='Your-Account']"))).click();
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[name='email'], #input-email"))).sendKeys(email);
+        wait.until(ExpectedConditions.elementToBeClickable(
+            By.cssSelector(".right-bar a[href*='Your-Account']"))).click();
+
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+            By.cssSelector("input[name='email'], #input-email"))).sendKeys(email);
+
         driver.findElement(By.cssSelector("input[name='password'], #input-password")).sendKeys(password);
         driver.findElement(By.cssSelector("button[type='submit'], #button-login")).click();
+
         wait.until(ExpectedConditions.not(ExpectedConditions.urlContains("account/login")));
     }
 
     public void searchProduct(String keyword) {
-        WebElement searchBox = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("filter_name_desktop")));
+        WebElement searchBox = wait.until(ExpectedConditions.visibilityOfElementLocated(
+            By.id("filter_name_desktop")));
         searchBox.clear();
         searchBox.sendKeys(keyword);
         searchBox.sendKeys(Keys.ENTER);
@@ -37,11 +43,15 @@ public class PeriplusApp {
     }
 
     public WebElement getFirstProductFromSearch() {
-        return wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".row-category-grid .single-product .product-content h3 a")));
+        // each product card is wrapped in .single-product; the title link is inside .product-content h3
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(
+            By.cssSelector(".row-category-grid .single-product .product-content h3 a")));
     }
 
     public WebElement getAddToCartButtonFromProduct(WebElement productElement) {
-        return productElement.findElement(By.xpath("ancestor::div[@class='single-product']//a[contains(@class,'addtocart')]"));
+        // .addtocart is a direct sibling in the same .single-product container
+        return productElement.findElement(By.xpath(
+            "ancestor::div[@class='single-product']//a[contains(@class,'addtocart')]"));
     }
 
     public void openCart() {
@@ -49,7 +59,9 @@ public class PeriplusApp {
     }
 
     public List<WebElement> getCartItems() {
-        return wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector(".row-cart-product")));
+        // cart uses a div-based layout; each item is a .row-cart-product row
+        return wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(
+            By.cssSelector(".row-cart-product")));
     }
 
     public String getProductNameFromCartItem(WebElement cartItem) {

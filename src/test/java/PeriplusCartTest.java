@@ -13,41 +13,37 @@ public class PeriplusCartTest extends BaseTest {
     public void testAddToCart() {
         PeriplusApp periplus = new PeriplusApp(driver, wait);
 
-        // STEP 1: Buka & Login
         periplus.open();
         waitForPreloader();
-        
+
         periplus.login(EMAIL, PASSWORD);
         waitForPreloader();
-        System.out.println("LOGIN OK -> " + driver.getCurrentUrl());
+        System.out.println("login ok");
 
-        // STEP 2: Cari produk
         periplus.searchProduct("Harry Potter");
         waitForPreloader();
-        System.out.println("SEARCH OK -> " + driver.getCurrentUrl());
+        System.out.println("search ok");
 
-        // STEP 3: Pilih & masukkan ke keranjang
         WebElement firstProduct = periplus.getFirstProductFromSearch();
         String productName = firstProduct.getText().trim();
-        System.out.println("ADDING TO CART: " + productName);
+        System.out.println("adding to cart: " + productName);
 
         WebElement addToCartBtn = periplus.getAddToCartButtonFromProduct(firstProduct);
         scrollAndClick(addToCartBtn);
         waitForPreloader();
 
-        // STEP 4: Buka cart & Verifikasi (Assertion)
         periplus.openCart();
         waitForPreloader();
 
         List<WebElement> cartItems = periplus.getCartItems();
-        Assert.assertFalse(cartItems.isEmpty(), "FAIL: Halaman cart kosong!");
+        Assert.assertFalse(cartItems.isEmpty(), "cart is empty");
 
         String cartProductName = periplus.getProductNameFromCartItem(cartItems.get(0));
         Assert.assertTrue(
             cartProductName.toLowerCase().contains("harry potter"),
-            "FAIL: Produk di cart bukan Harry Potter, tapi: " + cartProductName
+            "unexpected product in cart: " + cartProductName
         );
 
-        System.out.println("VERIFIED: '" + cartProductName + "' in cart (" + cartItems.size() + " item)");
+        System.out.println("verified: '" + cartProductName + "' in cart (" + cartItems.size() + " item)");
     }
 }
