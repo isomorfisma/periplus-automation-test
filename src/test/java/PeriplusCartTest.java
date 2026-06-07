@@ -1,119 +1,53 @@
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import java.time.Duration;
+
 import java.util.List;
 
-public class PeriplusCartTest {
-    private WebDriver driver;
-    private WebDriverWait wait;
+public class PeriplusCartTest extends BaseTest {
+
     private final String EMAIL    = "michaeltotooo11@gmail.com";
     private final String PASSWORD = "automationtest123";
-    @BeforeMethod
-    public void setUp() {
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--start-maximized");
-        options.addArguments("--disable-notifications");
-        options.addArguments("--disable-extensions");
-        driver = new ChromeDriver(options);
-        wait   = new WebDriverWait(driver, Duration.ofSeconds(25));
-    }
-
-    @AfterMethod
-    public void tearDown() {
-        if (driver != null) driver.quit();
-    }
-
-    private void waitForPreloader() {
-        try {
-            wait.until(ExpectedConditions.invisibilityOfElementLocated(
-                By.cssSelector(".preloader, #loading")));
-        } catch (Exception ignored) {}
-    }
-
-    private void scrollAndClick(WebElement el) {
-        ((JavascriptExecutor) driver)
-            .executeScript("arguments[0].scrollIntoView({block:'center'});", el);
-        el.click();
-    }
 
     @Test
     public void testAddToCart() {
+        PeriplusApp periplus = new PeriplusApp(driver, wait);
 
-        driver.get("https://www.periplus.com/");
+        // STEP 1: Buka & Login
+        periplus.open();
         waitForPreloader();
-
-        wait.until(ExpectedConditions.elementToBeClickable(
-            By.cssSelector(".right-bar a[href*='Your-Account']"))).click();
-
-        wait.until(ExpectedConditions.visibilityOfElementLocated(
-            By.cssSelector("input[name='email'], #input-email")))
-            .sendKeys(EMAIL);
-
-        driver.findElement(
-            By.cssSelector("input[name='password'], #input-password"))
-            .sendKeys(PASSWORD);
-
-        driver.findElement(
-            By.cssSelector("button[type='submit'], #button-login"))
-            .click();
-
+        
+        periplus.login(EMAIL, PASSWORD);
         waitForPreloader();
-        wait.until(ExpectedConditions.not(
-            ExpectedConditions.urlContains("account/login")));
+        System.out.println("LOGIN OK -> " + driver.getCurrentUrl());
 
-        System.out.println("login ok");
-
-        WebElement searchBox = wait.until(ExpectedConditions.visibilityOfElementLocated(
-            By.id("filter_name_desktop")));
-        searchBox.clear();
-        searchBox.sendKeys("Harry Potter");
-        searchBox.sendKeys(Keys.ENTER);
+        // STEP 2: Cari produk
+        periplus.searchProduct("Harry Potter");
         waitForPreloader();
-        wait.until(ExpectedConditions.urlContains("filter_name"));
-        System.out.println("search ok");
+        System.out.println("SEARCH OK -> " + driver.getCurrentUrl());
 
-        // Each product card is wrapped in .single-product; the title link is inside .product-content h3
-        WebElement firstProduct = wait.until(ExpectedConditions.visibilityOfElementLocated(
-            By.cssSelector(".row-category-grid .single-product .product-content h3 a")));
-
+        // STEP 3: Pilih & masukkan ke keranjang
+        WebElement firstProduct = periplus.getFirstProductFromSearch();
         String productName = firstProduct.getText().trim();
-        System.out.println("adding to cart: " + productName);
+        System.out.println("ADDING TO CART: " + productName);
 
-        // .addtocart is a direct sibling in the same .single-product container
-        WebElement addToCartBtn = firstProduct.findElement(By.xpath(
-            "ancestor::div[@class='single-product']//a[contains(@class,'addtocart')]"));
-
+        WebElement addToCartBtn = periplus.getAddToCartButtonFromProduct(firstProduct);
         scrollAndClick(addToCartBtn);
         waitForPreloader();
 
-        driver.get("https://www.periplus.com/checkout/cart");
+        // STEP 4: Buka cart & Verifikasi (Assertion)
+        periplus.openCart();
         waitForPreloader();
 
-        // Cart uses a div-based layout; each item is a .row-cart-product row
-        List<WebElement> cartItems = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(
-            By.cssSelector(".row-cart-product")));
+        List<WebElement> cartItems = periplus.getCartItems();
+        Assert.assertFalse(cartItems.isEmpty(), "FAIL: Halaman cart kosong!");
 
-        Assert.assertFalse(cartItems.isEmpty(), "cart is empty");
-
-        String cartProductName = cartItems.get(0)
-            .findElement(By.cssSelector(".product-name a"))
-            .getText().trim();
-
+        String cartProductName = periplus.getProductNameFromCartItem(cartItems.get(0));
         Assert.assertTrue(
             cartProductName.toLowerCase().contains("harry potter"),
-            "unexpected product in cart: " + cartProductName);
+            "FAIL: Produk di cart bukan Harry Potter, tapi: " + cartProductName
+        );
 
-        System.out.println("verified: '" + cartProductName + "' in cart (" + cartItems.size() + " item)");
+        System.out.println("VERIFIED: '" + cartProductName + "' in cart (" + cartItems.size() + " item)");
     }
 }
